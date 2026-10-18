@@ -1,0 +1,790 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Global Composites News Intelligence Hub</title>
+  <meta name="description" content="Live global composites news aggregator with analytics, bookmarks, and smart filtering." />
+  <style>
+    :root{
+      --bg:#0b1220; --panel:#111a2b; --panel-2:#16233a; --soft:#1d2d4a;
+      --text:#ecf3ff; --muted:#9fb3d1; --accent:#4cc9f0; --accent-2:#80ed99;
+      --warn:#ffd166; --danger:#ef476f; --border:rgba(255,255,255,0.08);
+      --shadow:0 10px 30px rgba(0,0,0,0.25); --card-radius:18px;
+    }
+    body.light{
+      --bg:#f3f7fc; --panel:#ffffff; --panel-2:#f8fbff; --soft:#e7eef8;
+      --text:#132238; --muted:#5f728d; --accent:#0b84f3; --accent-2:#17a673;
+      --warn:#b7791f; --danger:#d7263d; --border:rgba(0,0,0,0.08);
+      --shadow:0 10px 30px rgba(20,40,80,0.08);
+    }
+    *{box-sizing:border-box}
+    html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:Inter,Segoe UI,Roboto,Arial,sans-serif}
+    a{color:var(--accent);text-decoration:none}
+    button,input,select,textarea{font:inherit}
+    .app{display:grid;grid-template-columns:320px 1fr;min-height:100vh}
+    .sidebar{background:linear-gradient(180deg,var(--panel),var(--panel-2));border-right:1px solid var(--border);padding:20px;position:sticky;top:0;height:100vh;overflow:auto}
+    .brand{display:flex;align-items:center;gap:14px;margin-bottom:20px}
+    .logo{width:48px;height:48px;border-radius:14px;background:linear-gradient(135deg,var(--accent),var(--accent-2));display:grid;place-items:center;color:#00131a;font-weight:800;box-shadow:var(--shadow)}
+    .brand h1{margin:0;font-size:1.05rem;line-height:1.2}
+    .brand p{margin:2px 0 0 0;color:var(--muted);font-size:0.85rem}
+    .panel{background:rgba(255,255,255,0.02);border:1px solid var(--border);border-radius:var(--card-radius);padding:16px;margin-bottom:16px;box-shadow:var(--shadow)}
+    .panel h2{margin:0 0 12px 0;font-size:0.98rem}
+    .stack{display:flex;flex-direction:column;gap:10px}
+    .row{display:flex;gap:10px;align-items:center}
+    .row.wrap{flex-wrap:wrap}
+    .grow{flex:1}
+    .input,.select,.textarea{width:100%;background:var(--soft);color:var(--text);border:1px solid var(--border);border-radius:12px;padding:11px 12px;outline:none}
+    .textarea{min-height:88px;resize:vertical}
+    .btn{border:none;border-radius:12px;padding:10px 14px;cursor:pointer;transition:0.2s ease;background:var(--soft);color:var(--text);border:1px solid var(--border)}
+    .btn:hover{transform:translateY(-1px)}
+    .btn.primary{background:linear-gradient(135deg,var(--accent),#4361ee);color:white}
+    .btn.success{background:linear-gradient(135deg,var(--accent-2),#2ec4b6);color:#06281b}
+    .btn.warn{background:linear-gradient(135deg,var(--warn),#f4a261);color:#271400}
+    .btn.danger{background:linear-gradient(135deg,var(--danger),#ff6b6b);color:white}
+    .btn.small{padding:8px 10px;border-radius:10px;font-size:0.88rem}
+    .main{padding:22px;overflow:auto}
+    .hero{background:radial-gradient(circle at top right,rgba(76,201,240,0.18),transparent 30%),radial-gradient(circle at top left,rgba(128,237,153,0.14),transparent 25%),linear-gradient(180deg,var(--panel),var(--panel-2));border:1px solid var(--border);border-radius:26px;padding:22px;box-shadow:var(--shadow);margin-bottom:18px}
+    .hero-top{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap;align-items:flex-start}
+    .hero h2{margin:0;font-size:1.7rem}
+    .hero p{color:var(--muted);max-width:860px;margin:8px 0 0 0;line-height:1.5}
+    .status-pill{padding:10px 14px;border-radius:999px;background:rgba(76,201,240,0.12);color:var(--accent);border:1px solid rgba(76,201,240,0.25);font-weight:600;white-space:nowrap}
+    .toolbar{margin-top:16px;display:grid;grid-template-columns:1.8fr 1fr 1fr 1fr auto;gap:12px}
+    .metrics{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin:18px 0}
+    .metric{background:linear-gradient(180deg,var(--panel),var(--panel-2));border:1px solid var(--border);border-radius:18px;padding:16px;box-shadow:var(--shadow)}
+    .metric .label{color:var(--muted);font-size:0.86rem;margin-bottom:8px}
+    .metric .value{font-size:1.6rem;font-weight:800}
+    .content-grid{display:grid;grid-template-columns:1fr 320px;gap:18px}
+    .news-section,.insight-section{min-width:0}
+    .section-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;gap:10px;flex-wrap:wrap}
+    .section-header h3{margin:0;font-size:1.15rem}
+    .feed-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:16px}
+    .card{background:linear-gradient(180deg,var(--panel),var(--panel-2));border:1px solid var(--border);border-radius:20px;padding:16px;box-shadow:var(--shadow);display:flex;flex-direction:column;gap:10px}
+    .card h4{margin:0;font-size:1.05rem;line-height:1.35}
+    .meta{color:var(--muted);font-size:0.84rem;display:flex;flex-wrap:wrap;gap:8px}
+    .summary{color:var(--text);opacity:0.95;line-height:1.5;font-size:0.95rem}
+    .tag-wrap{display:flex;flex-wrap:wrap;gap:8px}
+    .tag{border-radius:999px;padding:6px 10px;font-size:0.78rem;background:var(--soft);border:1px solid var(--border);color:var(--text)}
+    .card-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:auto;padding-top:4px}
+    .mini-list{display:flex;flex-direction:column;gap:10px}
+    .mini-item{border:1px solid var(--border);background:linear-gradient(180deg,var(--panel),var(--panel-2));border-radius:16px;padding:12px}
+    .mini-item strong{display:block;margin-bottom:6px}
+    .muted{color:var(--muted)}
+    .small{font-size:0.86rem}
+    .tiny{font-size:0.78rem}
+    .empty{padding:30px;text-align:center;color:var(--muted);border:1px dashed var(--border);border-radius:20px;background:rgba(255,255,255,0.02)}
+    .footer-note{margin-top:18px;color:var(--muted);font-size:0.84rem;line-height:1.5}
+    .toggle{display:flex;align-items:center;gap:8px}
+    .toggle input{width:18px;height:18px}
+    .badge-live{background:rgba(23,166,115,0.18);color:var(--accent-2);border:1px solid rgba(23,166,115,0.3);padding:4px 8px;border-radius:999px;font-size:0.75rem;font-weight:700}
+    .badge-stale{background:rgba(255,209,102,0.14);color:var(--warn);border:1px solid rgba(255,209,102,0.26);padding:4px 8px;border-radius:999px;font-size:0.75rem;font-weight:700}
+    .source-item{display:flex;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px dashed var(--border)}
+    .source-item:last-child{border-bottom:none}
+    @media (max-width:1200px){.metrics{grid-template-columns:repeat(3,1fr)}.content-grid{grid-template-columns:1fr}}
+    @media (max-width:980px){.app{grid-template-columns:1fr}.sidebar{position:relative;height:auto;border-right:none;border-bottom:1px solid var(--border)}.toolbar{grid-template-columns:1fr 1fr}}
+    @media (max-width:680px){.metrics{grid-template-columns:repeat(2,1fr)}.toolbar{grid-template-columns:1fr}.feed-list{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="logo">CF</div>
+        <div>
+          <h1>Composites News Hub</h1>
+          <p>Global intelligence dashboard</p>
+          <p class="tiny muted" style="margin-top:4px;">Created by Mayur S</p>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2>Feed Control</h2>
+        <div class="stack">
+          <label>
+            <div class="small muted" style="margin-bottom:6px;">RSS feed URLs (one per line)</div>
+            <textarea id="feedUrls" class="textarea">https://www.jeccomposites.com/feed/
+https://www.offshorewind.biz/feed
+https://engineered-composites.co.uk/feed/
+https://www.azom.com/syndication.axd?catid=17
+https://www.autocarindia.com/rss/all
+https://www.autocarpro.in/rssfeeds
+http://feeds.feedburner.com/Windtech-International
+https://news.google.com/rss/search?q=composites+materials+manufacturing&hl=en-US&gl=US&ceid=US:en
+https://news.google.com/rss/search?q=carbon+fiber+composite&hl=en-US&gl=US&ceid=US:en
+https://news.google.com/rss/search?q=wind+blade+composite&hl=en-US&gl=US&ceid=US:en
+https://news.google.com/rss/search?q=aerospace+composite&hl=en-US&gl=US&ceid=US:en
+https://news.google.com/rss/search?q=automotive+composite&hl=en-US&gl=US&ceid=US:en
+https://news.google.com/rss/search?q=composite+recycling&hl=en-US&gl=US&ceid=US:en
+https://news.google.com/rss/search?q=prepreg&hl=en-US&gl=US&ceid=US:en</textarea>
+          </label>
+          <label>
+            <div class="small muted" style="margin-bottom:6px;">RSS-to-JSON endpoint template</div>
+            <input id="proxyTemplate" class="input" value="https://api.rss2json.com/v1/api.json?rss_url={url}" />
+          </label>
+          <div class="row">
+            <button class="btn primary grow" id="loadFeedsBtn">Load Live News</button>
+            <button class="btn" id="refreshBtn">Refresh</button>
+          </div>
+          <label class="toggle">
+            <input type="checkbox" id="autoRefreshToggle" checked />
+            <span class="small">Auto refresh every 15 min</span>
+          </label>
+          <label>
+            <div class="small muted" style="margin-bottom:6px;">Refresh interval (minutes)</div>
+            <input id="refreshInterval" class="input" type="number" min="1" value="15" />
+          </label>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2>User Options</h2>
+        <div class="stack">
+          <div class="row">
+            <button class="btn grow" id="themeBtn">Toggle Theme</button>
+            <button class="btn grow" id="clearBookmarksBtn">Clear Bookmarks</button>
+          </div>
+          <div class="row">
+            <button class="btn success grow" id="exportBookmarksBtn">Export Bookmarks</button>
+            <button class="btn warn grow" id="copyDigestBtn">Copy Digest</button>
+          </div>
+          <div class="row">
+            <button class="btn grow" id="copyAllLinksBtn">Copy All Visible Links</button>
+            <button class="btn grow" id="downloadHtmlStateBtn">Backup State</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2>Analytics Options</h2>
+        <div class="stack">
+          <label class="toggle"><input type="checkbox" id="dedupeToggle" checked /><span class="small">Deduplicate by title/link</span></label>
+          <label class="toggle"><input type="checkbox" id="keywordHighlightToggle" checked /><span class="small">Highlight composites keywords</span></label>
+          <label class="toggle"><input type="checkbox" id="openNewTabToggle" checked /><span class="small">Open article links in new tab</span></label>
+          <label class="toggle"><input type="checkbox" id="bookmarkOnlyToggle" /><span class="small">Show bookmarks only</span></label>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2>Keyword Model</h2>
+        <div class="small muted" style="margin-bottom:8px;">Used for auto-tagging and analytics.</div>
+        <textarea id="keywordsBox" class="textarea">composite
+composites
+carbon fiber
+glass fiber
+thermoplastic
+thermoset
+woven composite
+laminate
+prepreg
+aerospace
+automotive
+wind blade
+recycling
+resin transfer molding
+rtm
+pultrusion
+additive manufacturing
+lightweighting
+structural materials
+fiber reinforced polymer
+frp</textarea>
+      </div>
+
+      <div class="footer-note">For robust production deployment, use your own backend feed parser to avoid cross-origin and rate-limit issues.</div>
+    </aside>
+
+    <main class="main">
+      <section class="hero">
+        <div class="hero-top">
+          <div>
+            <h2>Global Composites News Intelligence Hub</h2>
+            <p>A live aggregator for composites-related news across materials, manufacturing, aerospace, automotive, wind energy, recycling, research, and markets.</p>
+          </div>
+          <div class="status-pill" id="statusPill">Idle</div>
+        </div>
+
+        <div class="toolbar">
+          <input id="searchInput" class="input" placeholder="Search title, source, summary, keyword..." />
+          <select id="categoryFilter" class="select">
+            <option value="all">All Categories</option>
+            <option value="Aerospace">Aerospace</option>
+            <option value="Automotive">Automotive</option>
+            <option value="Wind Energy">Wind Energy</option>
+            <option value="Manufacturing">Manufacturing</option>
+            <option value="Recycling">Recycling</option>
+            <option value="Research">Research</option>
+            <option value="Market">Market</option>
+            <option value="General">General</option>
+          </select>
+          <select id="sourceFilter" class="select"><option value="all">All Sources</option></select>
+          <select id="sortFilter" class="select">
+            <option value="newest">Sort: Newest</option>
+            <option value="oldest">Sort: Oldest</option>
+            <option value="source">Sort: Source</option>
+            <option value="title">Sort: Title</option>
+            <option value="bookmarked">Sort: Bookmarked First</option>
+          </select>
+          <button class="btn primary" id="analyzeBtn">Analyze</button>
+        </div>
+      </section>
+
+      <section class="metrics" id="metrics">
+        <div class="metric"><div class="label">Articles Loaded</div><div class="value" id="metricArticles">0</div></div>
+        <div class="metric"><div class="label">Sources</div><div class="value" id="metricSources">0</div></div>
+        <div class="metric"><div class="label">Bookmarks</div><div class="value" id="metricBookmarks">0</div></div>
+        <div class="metric"><div class="label">Categories Active</div><div class="value" id="metricCategories">0</div></div>
+        <div class="metric"><div class="label">Last Refresh</div><div class="value small" id="metricRefresh">Never</div></div>
+      </section>
+
+      <section class="content-grid">
+        <div class="news-section">
+          <div class="section-header">
+            <h3>Live News Stream</h3>
+            <div class="row wrap"><span class="small muted" id="visibleCountLabel">0 visible articles</span></div>
+          </div>
+          <div id="feedList" class="feed-list"></div>
+        </div>
+
+        <aside class="insight-section">
+          <div class="panel">
+            <div class="section-header"><h3>Top Sources</h3></div>
+            <div id="topSources" class="mini-list"></div>
+          </div>
+          <div class="panel">
+            <div class="section-header"><h3>Category Distribution</h3></div>
+            <div id="categoryDist" class="mini-list"></div>
+          </div>
+          <div class="panel">
+            <div class="section-header"><h3>Bookmarked Items</h3></div>
+            <div id="bookmarksList" class="mini-list"></div>
+          </div>
+        </aside>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    const state = {
+      articles: [],
+      filteredArticles: [],
+      bookmarks: JSON.parse(localStorage.getItem("composites_bookmarks") || "[]"),
+      theme: localStorage.getItem("composites_theme") || "dark",
+      timer: null,
+      lastRefresh: null
+    };
+
+    const categoryKeywords = {
+      "Aerospace": ["aerospace", "aircraft", "space", "aviation", "satellite"],
+      "Automotive": ["automotive", "vehicle", "car", "ev", "mobility"],
+      "Wind Energy": ["wind", "blade", "turbine", "renewable"],
+      "Manufacturing": ["manufacturing", "rtm", "pultrusion", "layup", "prepreg", "automation", "process", "thermoforming"],
+      "Recycling": ["recycling", "recycle", "circularity", "waste", "recovered fiber"],
+      "Research": ["research", "university", "study", "laboratory", "simulation", "modeling", "analysis"],
+      "Market": ["market", "acquisition", "investment", "business", "supply chain", "plant", "expansion", "merger"]
+    };
+
+    const els = {
+      feedUrls: document.getElementById("feedUrls"),
+      proxyTemplate: document.getElementById("proxyTemplate"),
+      loadFeedsBtn: document.getElementById("loadFeedsBtn"),
+      refreshBtn: document.getElementById("refreshBtn"),
+      autoRefreshToggle: document.getElementById("autoRefreshToggle"),
+      refreshInterval: document.getElementById("refreshInterval"),
+      themeBtn: document.getElementById("themeBtn"),
+      clearBookmarksBtn: document.getElementById("clearBookmarksBtn"),
+      exportBookmarksBtn: document.getElementById("exportBookmarksBtn"),
+      copyDigestBtn: document.getElementById("copyDigestBtn"),
+      copyAllLinksBtn: document.getElementById("copyAllLinksBtn"),
+      downloadHtmlStateBtn: document.getElementById("downloadHtmlStateBtn"),
+      dedupeToggle: document.getElementById("dedupeToggle"),
+      keywordHighlightToggle: document.getElementById("keywordHighlightToggle"),
+      openNewTabToggle: document.getElementById("openNewTabToggle"),
+      bookmarkOnlyToggle: document.getElementById("bookmarkOnlyToggle"),
+      keywordsBox: document.getElementById("keywordsBox"),
+      statusPill: document.getElementById("statusPill"),
+      searchInput: document.getElementById("searchInput"),
+      categoryFilter: document.getElementById("categoryFilter"),
+      sourceFilter: document.getElementById("sourceFilter"),
+      sortFilter: document.getElementById("sortFilter"),
+      analyzeBtn: document.getElementById("analyzeBtn"),
+      metricArticles: document.getElementById("metricArticles"),
+      metricSources: document.getElementById("metricSources"),
+      metricBookmarks: document.getElementById("metricBookmarks"),
+      metricCategories: document.getElementById("metricCategories"),
+      metricRefresh: document.getElementById("metricRefresh"),
+      visibleCountLabel: document.getElementById("visibleCountLabel"),
+      feedList: document.getElementById("feedList"),
+      topSources: document.getElementById("topSources"),
+      categoryDist: document.getElementById("categoryDist"),
+      bookmarksList: document.getElementById("bookmarksList")
+    };
+
+    function applyTheme() {
+      document.body.classList.toggle("light", state.theme === "light");
+      localStorage.setItem("composites_theme", state.theme);
+    }
+
+    function sanitizeHTML(str = "") {
+      const div = document.createElement("div");
+      div.textContent = String(str);
+      return div.innerHTML;
+    }
+
+    function stripHTML(html = "") {
+      const div = document.createElement("div");
+      div.innerHTML = html;
+      return div.textContent || div.innerText || "";
+    }
+
+    function parseDateSafe(dateStr) {
+      if (!dateStr) return null;
+      const d = new Date(dateStr);
+      return isNaN(d.getTime()) ? null : d;
+    }
+
+    function getKeywords() {
+      return els.keywordsBox.value.split("\n").map(s => s.trim().toLowerCase()).filter(Boolean);
+    }
+
+    function detectCategory(text) {
+      const t = text.toLowerCase();
+      for (const [cat, words] of Object.entries(categoryKeywords)) {
+        if (words.some(w => t.includes(w))) return cat;
+      }
+      return "General";
+    }
+
+    function detectTags(text) {
+      const t = text.toLowerCase();
+      return getKeywords().filter(k => t.includes(k)).slice(0, 8);
+    }
+
+    function articleId(article) {
+      try {
+        return btoa(unescape(encodeURIComponent((article.link || "") + "||" + (article.title || "")))).slice(0, 120);
+      } catch (e) {
+        return "id_" + Math.random().toString(36).slice(2);
+      }
+    }
+
+    function isBookmarked(article) {
+      return state.bookmarks.some(b => b.id === article.id);
+    }
+
+    function saveBookmarks() {
+      localStorage.setItem("composites_bookmarks", JSON.stringify(state.bookmarks));
+    }
+
+    function toggleBookmark(article) {
+      const idx = state.bookmarks.findIndex(b => b.id === article.id);
+      if (idx >= 0) state.bookmarks.splice(idx, 1);
+      else state.bookmarks.unshift({
+        id: article.id, title: article.title, link: article.link,
+        source: article.source, date: article.date,
+        summary: article.summary, category: article.category
+      });
+      saveBookmarks();
+      renderAll();
+    }
+
+    async function copyToClipboard(text, successMsg = "Copied") {
+      try {
+        await navigator.clipboard.writeText(text);
+        setStatus(successMsg, "ok");
+      } catch (e) {
+        const ta = document.createElement("textarea");
+        ta.value = text;
+        document.body.appendChild(ta);
+        ta.select();
+        try { document.execCommand("copy"); setStatus(successMsg, "ok"); }
+        catch (err) { setStatus("Clipboard copy failed", "warn"); }
+        document.body.removeChild(ta);
+      }
+    }
+
+    function setStatus(msg, type = "idle") {
+      els.statusPill.textContent = msg;
+      els.statusPill.className = "status-pill";
+      if (type === "ok") els.statusPill.style.color = "var(--accent-2)";
+      else if (type === "warn") els.statusPill.style.color = "var(--warn)";
+      else if (type === "err") els.statusPill.style.color = "var(--danger)";
+      else els.statusPill.style.color = "var(--accent)";
+    }
+
+    async function fetchFeed(feedUrl, proxyTemplate) {
+      const endpoint = proxyTemplate.replace("{url}", encodeURIComponent(feedUrl));
+      const res = await fetch(endpoint);
+      if (!res.ok) throw new Error(`Failed feed fetch: ${feedUrl}`);
+      const data = await res.json();
+
+      let items = [];
+      if (Array.isArray(data.items)) {
+        items = data.items.map(item => ({
+          title: item.title || "Untitled",
+          link: item.link || "",
+          source: (data.feed && data.feed.title) || new URL(feedUrl).hostname,
+          date: item.pubDate || item.published || "",
+          summary: stripHTML(item.description || item.content || item.contentSnippet || ""),
+          raw: item
+        }));
+      } else if (Array.isArray(data.articles)) {
+        items = data.articles.map(item => ({
+          title: item.title || "Untitled",
+          link: item.url || item.link || "",
+          source: (item.source && item.source.name) || new URL(feedUrl).hostname,
+          date: item.publishedAt || "",
+          summary: stripHTML(item.description || ""),
+          raw: item
+        }));
+      } else {
+        throw new Error(`Unsupported feed response for ${feedUrl}`);
+      }
+
+      return items.map(a => {
+        const combined = `${a.title} ${a.summary} ${a.source}`;
+        return {
+          ...a,
+          category: detectCategory(combined),
+          tags: detectTags(combined),
+          id: articleId(a)
+        };
+      });
+    }
+
+    function dedupeArticles(articles) {
+      const map = new Map();
+      for (const a of articles) {
+        const key = ((a.link || "").trim().toLowerCase()) || ((a.title || "").trim().toLowerCase());
+        if (!map.has(key)) map.set(key, a);
+      }
+      return [...map.values()];
+    }
+
+    async function loadFeeds() {
+      const feedUrls = els.feedUrls.value.split("\n").map(s => s.trim()).filter(Boolean);
+      const proxyTemplate = els.proxyTemplate.value.trim();
+
+      if (!feedUrls.length) { setStatus("No feed URLs provided", "warn"); return; }
+      if (!proxyTemplate.includes("{url}")) { setStatus("Proxy template must contain {url}", "warn"); return; }
+
+      setStatus("Loading feeds...", "idle");
+      els.loadFeedsBtn.disabled = true;
+      els.refreshBtn.disabled = true;
+
+      try {
+        const promises = feedUrls.map(url => fetchFeed(url, proxyTemplate).catch(err => {
+          console.warn("Feed load error:", url, err);
+          return [];
+        }));
+
+        const results = await Promise.all(promises);
+        let merged = results.flat();
+
+        if (els.dedupeToggle.checked) merged = dedupeArticles(merged);
+
+        state.articles = merged;
+        state.lastRefresh = new Date();
+        setStatus(`Loaded ${merged.length} articles`, "ok");
+        populateSourceFilter();
+        renderAll();
+      } catch (e) {
+        console.error(e);
+        setStatus("Failed to load one or more feeds", "err");
+      } finally {
+        els.loadFeedsBtn.disabled = false;
+        els.refreshBtn.disabled = false;
+      }
+    }
+
+    function populateSourceFilter() {
+      const sources = [...new Set(state.articles.map(a => a.source).filter(Boolean))].sort();
+      const current = els.sourceFilter.value;
+      els.sourceFilter.innerHTML = `<option value="all">All Sources</option>` +
+        sources.map(s => `<option value="${sanitizeHTML(s)}">${sanitizeHTML(s)}</option>`).join("");
+      if (sources.includes(current)) els.sourceFilter.value = current;
+    }
+
+    function escapeRegExp(s) {
+      return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    }
+
+    function highlightKeywords(text) {
+      const safe = sanitizeHTML(text);
+      if (!els.keywordHighlightToggle.checked) return safe;
+      let out = safe;
+      const kws = getKeywords().sort((a, b) => b.length - a.length);
+      kws.forEach(k => {
+        if (!k) return;
+        const regex = new RegExp(`(${escapeRegExp(k)})`, "ig");
+        out = out.replace(regex, `<mark style="background:rgba(255,209,102,0.22);color:inherit;padding:0 2px;border-radius:4px;">$1</mark>`);
+      });
+      return out;
+    }
+
+    function filterAndSortArticles() {
+      const q = els.searchInput.value.trim().toLowerCase();
+      const cat = els.categoryFilter.value;
+      const source = els.sourceFilter.value;
+      const bookmarksOnly = els.bookmarkOnlyToggle.checked;
+
+      let arr = state.articles.filter(a => {
+        const blob = `${a.title} ${a.summary} ${a.source} ${(a.tags || []).join(" ")} ${a.category}`.toLowerCase();
+        return (!q || blob.includes(q)) &&
+               (cat === "all" || a.category === cat) &&
+               (source === "all" || a.source === source) &&
+               (!bookmarksOnly || isBookmarked(a));
+      });
+
+      const sort = els.sortFilter.value;
+      arr.sort((a, b) => {
+        if (sort === "newest") return (parseDateSafe(b.date)?.getTime() || 0) - (parseDateSafe(a.date)?.getTime() || 0);
+        if (sort === "oldest") return (parseDateSafe(a.date)?.getTime() || 0) - (parseDateSafe(b.date)?.getTime() || 0);
+        if (sort === "source") return (a.source || "").localeCompare(b.source || "");
+        if (sort === "title") return (a.title || "").localeCompare(b.title || "");
+        if (sort === "bookmarked") return Number(isBookmarked(b)) - Number(isBookmarked(a));
+        return 0;
+      });
+
+      state.filteredArticles = arr;
+    }
+
+    function formatDate(dateStr) {
+      const d = parseDateSafe(dateStr);
+      return d ? d.toLocaleString() : "Unknown date";
+    }
+
+    function articleFreshnessBadge(dateStr) {
+      const d = parseDateSafe(dateStr);
+      if (!d) return `<span class="badge-stale">Undated</span>`;
+      const ageHours = (Date.now() - d.getTime()) / 36e5;
+      return ageHours <= 48 ? `<span class="badge-live">Live</span>` : `<span class="badge-stale">Archive</span>`;
+    }
+
+    function renderArticles() {
+      filterAndSortArticles();
+      els.visibleCountLabel.textContent = `${state.filteredArticles.length} visible articles`;
+
+      if (!state.filteredArticles.length) {
+        els.feedList.innerHTML = `<div class="empty">No matching articles found. Try adjusting filters, feeds, or search terms.</div>`;
+        return;
+      }
+
+      els.feedList.innerHTML = state.filteredArticles.map(a => {
+        const bookmarked = isBookmarked(a);
+        const target = els.openNewTabToggle.checked ? '_blank' : '_self';
+        const rel = els.openNewTabToggle.checked ? 'noopener noreferrer' : '';
+        const safeLink = sanitizeHTML(a.link);
+        const safeId = encodeURIComponent(a.id);
+        return `
+          <article class="card">
+            <h4>${highlightKeywords(a.title)}</h4>
+            <div class="meta">
+              <span>${sanitizeHTML(a.source || "Unknown source")}</span>
+              <span>•</span>
+              <span>${sanitizeHTML(formatDate(a.date))}</span>
+              <span>•</span>
+              ${articleFreshnessBadge(a.date)}
+            </div>
+            <div class="tag-wrap">
+              <span class="tag">${sanitizeHTML(a.category)}</span>
+              ${(a.tags || []).map(t => `<span class="tag">${sanitizeHTML(t)}</span>`).join("")}
+            </div>
+            <div class="summary">${highlightKeywords(a.summary || "No summary available.")}</div>
+            <div class="card-actions">
+              <a class="btn small primary" href="${safeLink}" target="${target}" rel="${rel}">Open Link</a>
+              <button class="btn small" onclick="copyArticleLink('${safeId}')">Copy Link</button>
+              <button class="btn small" onclick="copyArticleSummary('${safeId}')">Copy Summary</button>
+              <button class="btn small ${bookmarked ? "warn" : ""}" onclick="bookmarkArticle('${safeId}')">
+                ${bookmarked ? "Bookmarked" : "Bookmark"}
+              </button>
+            </div>
+          </article>
+        `;
+      }).join("");
+    }
+
+    function renderMetrics() {
+      const sourceCount = new Set(state.articles.map(a => a.source).filter(Boolean)).size;
+      const categoryCount = new Set(state.articles.map(a => a.category).filter(Boolean)).size;
+      els.metricArticles.textContent = state.articles.length;
+      els.metricSources.textContent = sourceCount;
+      els.metricBookmarks.textContent = state.bookmarks.length;
+      els.metricCategories.textContent = categoryCount;
+      els.metricRefresh.textContent = state.lastRefresh ? state.lastRefresh.toLocaleTimeString() : "Never";
+    }
+
+    function renderTopSources() {
+      const counts = {};
+      state.articles.forEach(a => counts[a.source] = (counts[a.source] || 0) + 1);
+      const items = Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, 10);
+      if (!items.length) { els.topSources.innerHTML = `<div class="empty">No source analytics yet.</div>`; return; }
+      els.topSources.innerHTML = items.map(([source, count]) => `
+        <div class="source-item">
+          <div><strong class="small">${sanitizeHTML(source)}</strong></div>
+          <div class="muted small">${count}</div>
+        </div>`).join("");
+    }
+
+    function renderCategoryDist() {
+      const counts = {};
+      state.articles.forEach(a => counts[a.category] = (counts[a.category] || 0) + 1);
+      const items = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+      if (!items.length) { els.categoryDist.innerHTML = `<div class="empty">No category analytics yet.</div>`; return; }
+      els.categoryDist.innerHTML = items.map(([cat, count]) => `
+        <div class="mini-item">
+          <strong>${sanitizeHTML(cat)}</strong>
+          <div class="muted small">${count} article(s)</div>
+        </div>`).join("");
+    }
+
+    function renderBookmarks() {
+      if (!state.bookmarks.length) {
+        els.bookmarksList.innerHTML = `<div class="empty">No bookmarks saved.</div>`;
+        return;
+      }
+      els.bookmarksList.innerHTML = state.bookmarks.slice(0, 12).map(b => `
+        <div class="mini-item">
+          <strong>${sanitizeHTML(b.title)}</strong>
+          <div class="muted tiny">${sanitizeHTML(b.source || "")}</div>
+          <div class="row wrap" style="margin-top:8px;">
+            <a class="btn small primary" href="${sanitizeHTML(b.link)}" target="_blank" rel="noopener noreferrer">Open</a>
+            <button class="btn small" onclick="removeBookmarkById('${encodeURIComponent(b.id)}')">Remove</button>
+          </div>
+        </div>`).join("");
+    }
+
+    function renderAll() {
+      renderMetrics();
+      renderArticles();
+      renderTopSources();
+      renderCategoryDist();
+      renderBookmarks();
+    }
+
+    function startAutoRefresh() {
+      if (state.timer) clearInterval(state.timer);
+      state.timer = null;
+      if (!els.autoRefreshToggle.checked) return;
+      const minutes = Math.max(1, Number(els.refreshInterval.value || 15));
+      state.timer = setInterval(loadFeeds, minutes * 60 * 1000);
+    }
+
+    function downloadBlob(filename, text) {
+      const blob = new Blob([text], { type: "application/json" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = filename;
+      a.click();
+      URL.revokeObjectURL(a.href);
+    }
+
+    function exportBookmarks() {
+      if (!state.bookmarks.length) { setStatus("No bookmarks to export", "warn"); return; }
+      downloadBlob("composites-bookmarks.json", JSON.stringify(state.bookmarks, null, 2));
+    }
+
+    function copyDigest() {
+      if (!state.filteredArticles.length) { setStatus("Nothing to digest", "warn"); return; }
+      const lines = state.filteredArticles.slice(0, 20).map((a, i) =>
+        `${i + 1}. ${a.title}\nSource: ${a.source}\nDate: ${formatDate(a.date)}\nCategory: ${a.category}\nLink: ${a.link}\n`);
+      copyToClipboard(lines.join("\n"), "Digest copied");
+    }
+
+    function copyAllVisibleLinks() {
+      if (!state.filteredArticles.length) { setStatus("Nothing to copy", "warn"); return; }
+      const txt = state.filteredArticles.map(a => `${a.title} — ${a.link}`).join("\n");
+      copyToClipboard(txt, "Visible links copied");
+    }
+
+    function backupState() {
+      const payload = {
+        exportedAt: new Date().toISOString(),
+        feeds: els.feedUrls.value,
+        proxyTemplate: els.proxyTemplate.value,
+        bookmarks: state.bookmarks,
+        theme: state.theme,
+        keywords: els.keywordsBox.value
+      };
+      downloadBlob("composites-news-hub-state.json", JSON.stringify(payload, null, 2));
+      setStatus("State backup downloaded", "ok");
+    }
+
+    function analyzeNow() {
+      renderAll();
+      setStatus("Analytics updated", "ok");
+    }
+
+    window.bookmarkArticle = function(encodedId) {
+      const id = decodeURIComponent(encodedId);
+      const article = state.articles.find(a => a.id === id);
+      if (article) toggleBookmark(article);
+    };
+
+    window.removeBookmarkById = function(encodedId) {
+      const id = decodeURIComponent(encodedId);
+      state.bookmarks = state.bookmarks.filter(b => b.id !== id);
+      saveBookmarks();
+      renderAll();
+    };
+
+    window.copyArticleLink = function(encodedId) {
+      const id = decodeURIComponent(encodedId);
+      const article = state.articles.find(a => a.id === id);
+      if (article && article.link) copyToClipboard(article.link, "Article link copied");
+      else setStatus("No link available", "warn");
+    };
+
+    window.copyArticleSummary = function(encodedId) {
+      const id = decodeURIComponent(encodedId);
+      const article = state.articles.find(a => a.id === id);
+      if (article) {
+        const txt = `${article.title}\n${article.source}\n${formatDate(article.date)}\n\n${article.summary}\n\n${article.link}`;
+        copyToClipboard(txt, "Article summary copied");
+      }
+    };
+
+    els.loadFeedsBtn.addEventListener("click", async () => {
+      await loadFeeds();
+      startAutoRefresh();
+    });
+
+    els.refreshBtn.addEventListener("click", loadFeeds);
+    els.themeBtn.addEventListener("click", () => {
+      state.theme = state.theme === "dark" ? "light" : "dark";
+      applyTheme();
+    });
+
+    els.clearBookmarksBtn.addEventListener("click", () => {
+      if (!confirm("Clear all bookmarks?")) return;
+      state.bookmarks = [];
+      saveBookmarks();
+      renderAll();
+    });
+
+    els.exportBookmarksBtn.addEventListener("click", exportBookmarks);
+    els.copyDigestBtn.addEventListener("click", copyDigest);
+    els.copyAllLinksBtn.addEventListener("click", copyAllVisibleLinks);
+    els.downloadHtmlStateBtn.addEventListener("click", backupState);
+    els.autoRefreshToggle.addEventListener("change", startAutoRefresh);
+    els.refreshInterval.addEventListener("change", startAutoRefresh);
+
+    [els.searchInput, els.categoryFilter, els.sourceFilter, els.sortFilter, els.bookmarkOnlyToggle]
+      .forEach(el => el.addEventListener("input", renderAll));
+
+    els.analyzeBtn.addEventListener("click", analyzeNow);
+    els.dedupeToggle.addEventListener("change", () => {
+      if (els.dedupeToggle.checked) {
+        state.articles = dedupeArticles(state.articles);
+      }
+      renderAll();
+    });
+    els.keywordHighlightToggle.addEventListener("change", renderAll);
+    els.openNewTabToggle.addEventListener("change", renderAll);
+
+    applyTheme();
+    renderAll();
+    startAutoRefresh();
+    setStatus("Ready — click 'Load Live News'", "idle");
+  </script>
+</body>
+</html>
